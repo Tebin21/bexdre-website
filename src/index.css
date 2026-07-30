@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/* ─── Brand typeface ─── */
+
+@font-face {
+  font-family: 'Batica Sans';
+  src:
+    url('/fonts/baticasans-regular.woff2') format('woff2'),
+    url('/fonts/baticasans-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  /* 'optional' (not 'swap'): fonts are self-hosted and small, so the ~100ms decision
+     window almost always picks up Batica Sans anyway — but unlike 'swap', it never
+     triggers a later reflow/repaint, which was causing a real layout shift (Lighthouse
+     CLS 0.4) as the tall footer reflowed once the custom font swapped in. */
+  font-display: optional;
+}
+
+@font-face {
+  font-family: 'Batica Sans';
+  src:
+    url('/fonts/baticasans-bold.woff2') format('woff2'),
+    url('/fonts/baticasans-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  /* 'optional' (not 'swap'): fonts are self-hosted and small, so the ~100ms decision
+     window almost always picks up Batica Sans anyway — but unlike 'swap', it never
+     triggers a later reflow/repaint, which was causing a real layout shift (Lighthouse
+     CLS 0.4) as the tall footer reflowed once the custom font swapped in. */
+  font-display: optional;
+}
+
+@theme {
+  --font-sans: 'Batica Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ─── Accessibility ─── */
+
+*:focus-visible {
+  outline: 2px solid #24AC7C;
+  outline-offset: 2px;
+}
+
+/* ─── Keyframes (only things Tailwind cannot express inline) ─── */
+
+@keyframes aurora-shift {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%       { opacity: 0.65; transform: scale(1.06); }
+}
+
+/* Every other animation in the app checks prefersReducedMotion() in JS before running;
+   this one is pure CSS (always-on, decorative), so it needs the equivalent media-query
+   guard to actually stop for users who asked for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-pulse {
+    animation: none;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #05070A; }
+::-webkit-scrollbar-thumb { background: #24AC7C; border-radius: 3px; }
+
+/* ─── Selection ─── */
+::selection { background: rgba(36, 172, 124, 0.30); color: #fff; }
