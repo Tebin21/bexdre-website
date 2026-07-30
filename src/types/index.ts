@@ -137,6 +137,8 @@ export interface SocialLink {
 export interface ContactInfo {
   email: string;
   phone: string;
+  whatsapp: string;
+  scheduleMeetingUrl: string;
   offices: OfficeInfo[];
   socials: SocialLink[];
   isPlaceholder: true;

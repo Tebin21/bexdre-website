@@ -12,6 +12,8 @@ export const SOCIAL_LINKS: SocialLink[] = [
 export const CONTACT_INFO: ContactInfo = {
   email: 'hello@bexdre.com', // TODO: confirm real inbox
   phone: '+1 (555) 010-0100', // 555-prefixed placeholder number
+  whatsapp: '#', // TODO: real WhatsApp business number/link — no account exists yet.
+  scheduleMeetingUrl: '#', // TODO: real scheduling link (Calendly/Cal.com) — no integration exists yet.
   offices: [
     {
       label: 'Headquarters',

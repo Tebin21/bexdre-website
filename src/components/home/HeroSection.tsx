@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
+import { HeroVideo } from './HeroVideo';
 import { gsap, SplitText } from '@/lib/gsap';
 import { useParallax } from '@/hooks/useParallax';
 import { prefersReducedMotion } from '@/lib/motion';
@@ -40,7 +41,7 @@ export const HeroSection: React.FC = () => {
   return (
     <section
       ref={parallaxRef}
-      className="relative min-h-[92vh] flex items-center overflow-hidden pt-[70px]"
+      className="relative overflow-hidden pt-10 lg:pt-[210px] xl:pt-[245px] pb-20 md:pb-28 lg:pb-32"
     >
       {/* Decorative parallax glow orbs */}
       <div
@@ -55,6 +56,7 @@ export const HeroSection: React.FC = () => {
       />
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-10 max-sm:px-5 w-full">
+        {/* Text column — left-aligned on desktop, unchanged from prior layout */}
         <div className="flex flex-col items-start gap-8 max-w-[900px]">
           <h1
             ref={headingRef}
@@ -73,6 +75,11 @@ export const HeroSection: React.FC = () => {
               View Work
             </Button>
           </div>
+        </div>
+
+        {/* Hero video showcase — centered, sits below CTA */}
+        <div className="w-full mt-16 md:mt-20 lg:mt-24">
+          <HeroVideo />
         </div>
       </div>
     </section>
