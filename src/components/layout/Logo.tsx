@@ -10,7 +10,19 @@ interface LogoProps {
 export const Logo: React.FC<LogoProps> = ({ className = '' }) => (
   <span className={`inline-flex items-center ${className}`}>
     <span className="sr-only">BEXDRE</span>
-    <img src="/images/x.png" alt="BEXDRE" className="hidden lg:block h-9 w-9 object-contain" />
-    <img src="/images/bexdrelogo.png" alt="BEXDRE" className="lg:hidden h-9 w-auto object-contain" />
+    <picture className="hidden lg:block">
+      <source srcSet="/images/x.webp" type="image/webp" />
+      <img src="/images/x-opt.png" alt="BEXDRE" width={320} height={320} className="h-9 w-9 object-contain" />
+    </picture>
+    <picture className="lg:hidden">
+      <source srcSet="/images/bexdrelogo.webp" type="image/webp" />
+      <img
+        src="/images/bexdrelogo-opt.png"
+        alt="BEXDRE"
+        width={800}
+        height={800}
+        className="h-9 w-auto object-contain"
+      />
+    </picture>
   </span>
 );

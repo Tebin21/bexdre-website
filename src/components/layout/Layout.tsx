@@ -38,12 +38,18 @@ export const Layout: React.FC = () => {
             On desktop the equivalent lives inside Navbar instead — never both at once. */}
         <div className="lg:hidden w-full flex justify-center pt-14" style={{ paddingBottom: HERO_LOGO_GAP }}>
           <Link to="/" aria-label="BEXDRE — Home" className="inline-flex">
-            <img
-              src="/images/bexdrelogo.png"
-              alt="BEXDRE"
-              className="w-[180px] sm:w-[220px] h-auto object-contain"
-              style={{ transform: `scale(${HERO_LOGO_SCALE})` }}
-            />
+            <picture>
+              <source srcSet="/images/bexdrelogo.webp" type="image/webp" />
+              <img
+                src="/images/bexdrelogo-opt.png"
+                alt="BEXDRE"
+                width={800}
+                height={800}
+                fetchPriority="high"
+                className="w-[180px] sm:w-[220px] h-auto object-contain"
+                style={{ transform: `scale(${HERO_LOGO_SCALE})` }}
+              />
+            </picture>
           </Link>
         </div>
         <Navbar />

@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { gsap } from '@/lib/gsap';
 import { markIntroComplete } from '@/lib/introSession';
 
 interface Greeting {
@@ -18,18 +17,24 @@ const GREETINGS: Greeting[] = [
   { text: 'Hello', lang: 'en', dir: 'ltr' },
 ];
 
-const DOT_FADE_IN = 0.5;
-const PAUSE_AFTER_DOT = 0.15;
-const FIRST_GREETING_FADE_IN = 0.35;
-const HOLD_FIRST = 0.25;
-const HOLD_BETWEEN = 0.18;
-const FADE_OUT = 0.22;
-const FADE_IN = 0.28;
-const CROSSFADE_OVERLAP = 0.08; // incoming greeting starts fading in while outgoing is still fading out
-const LAST_FADE_OUT = 0.3;
-const PAUSE_BEFORE_DOT_OUT = 0.2;
-const DOT_FADE_OUT = 0.45;
-const OVERLAY_FADE_OUT = 0.5;
+const DOT_FADE_IN = 500;
+const PAUSE_AFTER_DOT = 150;
+const FIRST_GREETING_FADE_IN = 350;
+const HOLD_FIRST = 250;
+const HOLD_BETWEEN = 180;
+const FADE_OUT = 220;
+const FADE_IN = 280;
+const CROSSFADE_OVERLAP = 80; // incoming greeting starts fading in while outgoing is still fading out
+const LAST_FADE_OUT = 300;
+const PAUSE_BEFORE_DOT_OUT = 200;
+const DOT_FADE_OUT = 450;
+const OVERLAY_FADE_OUT = 500;
+
+// Close cubic-bezier stand-ins for the GSAP power eases this sequence used to run on —
+// picked so the crossfade keeps the same deceleration/settle feel, not for exact
+// polynomial equivalence (irrelevant at these durations for an opacity-only fade).
+const EASE_OUT = 'cubic-bezier(0.16, 1, 0.3, 1)'; // ~power2.out
+const EASE_IN_OUT = 'cubic-bezier(0.45, 0, 0.55, 1)'; // ~power1.inOut / power2.inOut
 
 /**
  * Drives the calm, opacity-only sequence for the welcome intro: a single dot
@@ -39,6 +44,12 @@ const OVERLAY_FADE_OUT = 0.5;
  * the greeting, the dot, and finally the overlay itself fade away in turn.
  * Deliberately opacity-only throughout — no scale/movement/rotation — so it
  * needs no separate prefers-reduced-motion branch.
+ *
+ * Built on the native Web Animations API rather than GSAP: this component sits
+ * inside Layout (always eager, never lazy-loaded), so pulling in GSAP here would
+ * force it into the app's critical entry chunk for every visitor, even though
+ * every other GSAP use in the app (scroll reveals, parallax) is safely behind a
+ * lazy-loaded page chunk. WAAPI gets the identical crossfade with zero dependency.
  */
 export function useIntroSequence(onSequenceComplete: () => void) {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -55,7 +66,33 @@ export function useIntroSequence(onSequenceComplete: () => void) {
     const textB = textBRef.current;
     if (!overlay || !dot || !textA || !textB) return;
 
-    const spans = [textA, textB];
+    let cancelled = false;
+    const pendingTimeouts = new Set<number>();
+    const activeAnimations = new Set<Animation>();
+
+    function wait(ms: number): Promise<void> {
+      return new Promise((resolve) => {
+        const id = window.setTimeout(() => {
+          pendingTimeouts.delete(id);
+          resolve();
+        }, ms);
+        pendingTimeouts.add(id);
+      });
+    }
+
+    async function fade(el: HTMLElement, from: number, to: number, duration: number, easing: string) {
+      const anim = el.animate([{ opacity: from }, { opacity: to }], { duration, easing, fill: 'forwards' });
+      activeAnimations.add(anim);
+      try {
+        await anim.finished;
+      } catch {
+        // Cancelled mid-flight (unmount) — the cancelled flag below short-circuits the caller.
+      }
+      activeAnimations.delete(anim);
+      if (cancelled) return;
+      anim.commitStyles();
+      anim.cancel();
+    }
 
     function applyGreeting(el: HTMLSpanElement, greeting: Greeting) {
       el.textContent = greeting.text;
@@ -63,40 +100,61 @@ export function useIntroSequence(onSequenceComplete: () => void) {
       el.dir = greeting.dir;
     }
 
-    applyGreeting(textA, GREETINGS[0]);
-    gsap.set(dot, { opacity: 0 });
-    gsap.set(textA, { opacity: 0 });
-    gsap.set(textB, { opacity: 0 });
+    const spans = [textA, textB];
 
-    const tl = gsap.timeline({
-      onComplete: () => onCompleteRef.current(),
-    });
+    const run = async () => {
+      applyGreeting(textA, GREETINGS[0]);
+      dot.style.opacity = '0';
+      textA.style.opacity = '0';
+      textB.style.opacity = '0';
 
-    tl.to(dot, { opacity: 1, duration: DOT_FADE_IN, ease: 'power2.out' })
-      .to({}, { duration: PAUSE_AFTER_DOT })
-      .to(textA, { opacity: 1, duration: FIRST_GREETING_FADE_IN, ease: 'power2.out' })
-      .to({}, { duration: HOLD_FIRST });
+      await fade(dot, 0, 1, DOT_FADE_IN, EASE_OUT);
+      if (cancelled) return;
+      await wait(PAUSE_AFTER_DOT);
+      if (cancelled) return;
 
-    for (let i = 1; i < GREETINGS.length; i++) {
-      const incoming = spans[i % 2];
-      const outgoing = spans[(i - 1) % 2];
-      const greeting = GREETINGS[i];
+      await fade(textA, 0, 1, FIRST_GREETING_FADE_IN, EASE_OUT);
+      if (cancelled) return;
+      await wait(HOLD_FIRST);
+      if (cancelled) return;
 
-      tl.call(() => applyGreeting(incoming, greeting));
-      tl.to(outgoing, { opacity: 0, duration: FADE_OUT, ease: 'power1.inOut' })
-        .to(incoming, { opacity: 1, duration: FADE_IN, ease: 'power1.inOut' }, `<${CROSSFADE_OVERLAP}`)
-        .to({}, { duration: HOLD_BETWEEN });
-    }
+      for (let i = 1; i < GREETINGS.length; i++) {
+        const incoming = spans[i % 2];
+        const outgoing = spans[(i - 1) % 2];
+        const greeting = GREETINGS[i];
 
-    const lastVisible = spans[(GREETINGS.length - 1) % 2];
-    tl.to(lastVisible, { opacity: 0, duration: LAST_FADE_OUT, ease: 'power1.inOut' })
-      .to({}, { duration: PAUSE_BEFORE_DOT_OUT })
-      .to(dot, { opacity: 0, duration: DOT_FADE_OUT, ease: 'power2.inOut' })
-      .call(() => markIntroComplete())
-      .to(overlay, { opacity: 0, duration: OVERLAY_FADE_OUT, ease: 'power2.inOut' });
+        applyGreeting(incoming, greeting);
+        const outgoingFade = fade(outgoing, 1, 0, FADE_OUT, EASE_IN_OUT);
+        await wait(CROSSFADE_OVERLAP);
+        if (cancelled) return;
+        const incomingFade = fade(incoming, 0, 1, FADE_IN, EASE_IN_OUT);
+        await Promise.all([outgoingFade, incomingFade]);
+        if (cancelled) return;
+        await wait(HOLD_BETWEEN);
+        if (cancelled) return;
+      }
+
+      const lastVisible = spans[(GREETINGS.length - 1) % 2];
+      await fade(lastVisible, 1, 0, LAST_FADE_OUT, EASE_IN_OUT);
+      if (cancelled) return;
+      await wait(PAUSE_BEFORE_DOT_OUT);
+      if (cancelled) return;
+      await fade(dot, 1, 0, DOT_FADE_OUT, EASE_IN_OUT);
+      if (cancelled) return;
+
+      markIntroComplete();
+      await fade(overlay, 1, 0, OVERLAY_FADE_OUT, EASE_IN_OUT);
+      if (cancelled) return;
+
+      onCompleteRef.current();
+    };
+
+    run();
 
     return () => {
-      tl.kill();
+      cancelled = true;
+      pendingTimeouts.forEach((id) => window.clearTimeout(id));
+      activeAnimations.forEach((anim) => anim.cancel());
     };
   }, []);
 

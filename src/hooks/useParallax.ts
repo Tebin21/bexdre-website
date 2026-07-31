@@ -22,26 +22,38 @@ export function useParallax<T extends HTMLElement>(options: UseParallaxOptions =
 
     const orbs = container.querySelectorAll<HTMLElement>('[data-parallax]');
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      const dx = clientX - cx;
-      const dy = clientY - cy;
+    // Raw mousemove can fire well over 60 times/sec — coalesce to one GSAP tween
+    // update per animation frame instead of spawning one per event.
+    let rafId: number | null = null;
+    let pendingDx = 0;
+    let pendingDy = 0;
 
+    const applyParallax = () => {
+      rafId = null;
       orbs.forEach((orb) => {
         const factor = parseFloat(orb.dataset.parallax ?? '1');
         gsap.to(orb, {
-          x: dx * strength * factor,
-          y: dy * strength * factor,
+          x: pendingDx * strength * factor,
+          y: pendingDy * strength * factor,
           duration: 1.2,
           ease: 'power2.out',
         });
       });
     };
 
+    const handleMouseMove = (e: MouseEvent) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      pendingDx = e.clientX - cx;
+      pendingDy = e.clientY - cy;
+      if (rafId === null) rafId = requestAnimationFrame(applyParallax);
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, [strength]);
 
   return ref;

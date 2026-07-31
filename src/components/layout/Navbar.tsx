@@ -44,11 +44,16 @@ export const Navbar: React.FC = () => {
               Its box is taller than the pill on purpose and is allowed to overflow the
               rounded edge, same technique as the FAB in MobileBottomNav. */}
           <Link to="/" aria-label="BEXDRE — Home" className="flex items-center shrink-0 group">
-            <img
-              src="/images/x.png"
-              alt="BEXDRE"
-              className="h-32 w-32 xl:h-36 xl:w-36 object-contain transition-transform duration-300 ease-spring group-hover:scale-[1.05]"
-            />
+            <picture>
+              <source srcSet="/images/x.webp" type="image/webp" />
+              <img
+                src="/images/x-opt.png"
+                alt="BEXDRE"
+                width={320}
+                height={320}
+                className="h-32 w-32 xl:h-36 xl:w-36 object-contain transition-transform duration-300 ease-spring group-hover:scale-[1.05]"
+              />
+            </picture>
           </Link>
 
           <div className="flex items-center gap-0.5 shrink-0">
