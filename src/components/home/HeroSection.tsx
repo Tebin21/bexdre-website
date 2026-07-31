@@ -4,7 +4,9 @@ import { HeroVideo } from './HeroVideo';
 import { gsap, SplitText } from '@/lib/gsap';
 import { useParallax } from '@/hooks/useParallax';
 import { prefersReducedMotion } from '@/lib/motion';
+import { decideIntro, isIntroComplete, INTRO_COMPLETE_EVENT } from '@/lib/introSession';
 import { PLACEHOLDER_COPY } from '@/data/placeholders';
+import { CONTACT_INFO } from '@/data/contact';
 
 export const HeroSection: React.FC = () => {
   const parallaxRef = useParallax<HTMLElement>({ strength: 0.02 });
@@ -23,25 +25,44 @@ export const HeroSection: React.FC = () => {
       return;
     }
 
-    const split = new SplitText(heading, { type: 'words' });
-    gsap.set(heading, { opacity: 1 });
-    gsap.set([subtext, cta], { opacity: 0, y: 20 });
+    gsap.set([heading, subtext, cta], { opacity: 0 });
 
-    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    tl.from(split.words, { opacity: 0, y: 30, duration: 0.9, stagger: 0.06 })
-      .to(subtext, { opacity: 1, y: 0, duration: 0.7 }, '-=0.4')
-      .to(cta, { opacity: 1, y: 0, duration: 0.7 }, '-=0.5');
+    let cleanup: (() => void) | undefined;
+
+    function playEntrance() {
+      const split = new SplitText(heading, { type: 'words' });
+      gsap.set(heading, { opacity: 1 });
+      gsap.set([subtext, cta], { opacity: 0, y: 20 });
+
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      tl.from(split.words, { opacity: 0, y: 30, duration: 0.9, stagger: 0.06 })
+        .to(subtext, { opacity: 1, y: 0, duration: 0.7 }, '-=0.4')
+        .to(cta, { opacity: 1, y: 0, duration: 0.7 }, '-=0.5');
+
+      cleanup = () => {
+        tl.kill();
+        split.revert();
+      };
+    }
+
+    if (isIntroComplete() || !decideIntro()) {
+      playEntrance();
+      return () => cleanup?.();
+    }
+
+    const handleIntroComplete = () => playEntrance();
+    window.addEventListener(INTRO_COMPLETE_EVENT, handleIntroComplete, { once: true });
 
     return () => {
-      tl.kill();
-      split.revert();
+      window.removeEventListener(INTRO_COMPLETE_EVENT, handleIntroComplete);
+      cleanup?.();
     };
   }, []);
 
   return (
     <section
       ref={parallaxRef}
-      className="relative overflow-hidden pt-10 lg:pt-[210px] xl:pt-[245px] pb-20 md:pb-28 lg:pb-32"
+      className="relative overflow-hidden pt-10 lg:pt-[195px] xl:pt-[220px] pb-20 md:pb-28 lg:pb-32"
     >
       {/* Decorative parallax glow orbs */}
       <div
@@ -56,29 +77,35 @@ export const HeroSection: React.FC = () => {
       />
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-10 max-sm:px-5 w-full">
-        {/* Text column — left-aligned on desktop, unchanged from prior layout */}
-        <div className="flex flex-col items-start gap-8 max-w-[900px]">
+        {/* Text column — centered, editorial hierarchy */}
+        <div className="flex flex-col items-center text-center max-w-[1100px] mx-auto">
           <h1
             ref={headingRef}
-            className="opacity-0 text-[44px] md:text-[72px] lg:text-[96px] leading-[1.05] tracking-[-0.03em] font-bold text-white"
+            className="opacity-0 text-[42px] sm:text-[56px] md:text-[80px] lg:text-[104px] xl:text-[128px] leading-[1.05] md:leading-[1.02] tracking-[-0.03em] md:tracking-[-0.04em] font-bold text-white"
           >
-            Engineering Digital Realities.
+            Engineering
+            <br />
+            Digital
+            <br />
+            Realities.
           </h1>
-          <p ref={subtextRef} className="text-[18px] md:text-[20px] leading-[1.6] text-white/65 max-w-[560px]">
+          <p
+            ref={subtextRef}
+            className="mt-8 md:mt-10 text-[17px] md:text-[19px] lg:text-[20px] leading-[1.6] text-white/65 max-w-[560px] mx-auto"
+          >
             {PLACEHOLDER_COPY}
           </p>
-          <div ref={ctaRef} className="flex flex-wrap items-center gap-4">
-            <Button to="/contact" variant="primary" size="lg">
-              Start a Project
-            </Button>
-            <Button to="/work" variant="ghost" size="lg">
-              View Work
+          {/* Primary CTA. No technology-icon set exists in this codebase yet — once
+              real logos are chosen they belong in this same row, beside the button. */}
+          <div ref={ctaRef} className="mt-10 md:mt-12 flex flex-wrap items-center justify-center gap-6">
+            <Button href={CONTACT_INFO.scheduleMeetingUrl} variant="primary" size="lg">
+              Book a Call
             </Button>
           </div>
         </div>
 
         {/* Hero video showcase — centered, sits below CTA */}
-        <div className="w-full mt-16 md:mt-20 lg:mt-24">
+        <div className="w-full mt-20 md:mt-28 lg:mt-32">
           <HeroVideo />
         </div>
       </div>
