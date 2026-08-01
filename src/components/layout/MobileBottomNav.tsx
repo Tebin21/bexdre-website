@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import { BottomSheet } from "./BottomSheet";
 import { GlassSurface } from "@/components/ui/GlassSurface";
+import { StarBorderGlow } from "@/components/ui/StarBorder";
 import { BOTTOM_NAV_TABS, MORE_LINKS, getActiveTabId } from "@/data/bottomNav";
 import type { BottomNavTabId } from "@/data/bottomNav";
 import { LEGAL_LINKS } from "@/data/nav";
@@ -105,113 +106,119 @@ export const MobileBottomNav: React.FC = () => {
             refraction is tuned subtler than the desktop pill (lower distortionScale,
             no saturation boost) to keep that per-frame SVG-filter cost in check on
             mobile GPUs. */}
-        <GlassSurface
-          width="100%"
-          height={64}
-          borderRadius={999}
-          backgroundOpacity={0.72}
-          blur={9}
-          displace={0.5}
-          distortionScale={-70}
-          redOffset={0}
-          greenOffset={5}
-          blueOffset={10}
-          brightness={50}
-          opacity={0.75}
-          saturation={1.05}
-          mixBlendMode="difference"
-          className="border border-white/[0.08]"
-          style={{
-            boxShadow:
-              "0 8px 40px rgba(0,0,0,0.32), 0 16px 48px -16px rgba(36,172,124,0.16), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 -10px 16px -14px rgba(0,0,0,0.35) inset",
-          }}
-        >
-          <div className="relative grid grid-cols-5 items-stretch w-full h-full">
-            {/* Vignette — static radial gradient pulling light toward the top-center, mimics
-                how thick glass bends light toward its edges without any added blur cost */}
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_140%_at_50%_-20%,rgba(255,255,255,0.05),transparent_55%)]"
-            />
+        {/* Shape wrapper: clips the StarBorder comet-glow to the pill's own rounded edge
+            without touching GlassSurface's box, so it can't clip the FAB, which
+            deliberately overflows above this pill. */}
+        <div className="relative overflow-hidden rounded-full p-[2px]">
+          <GlassSurface
+            width="100%"
+            height={64}
+            borderRadius={999}
+            backgroundOpacity={0.72}
+            blur={9}
+            displace={0.5}
+            distortionScale={-70}
+            redOffset={0}
+            greenOffset={5}
+            blueOffset={10}
+            brightness={50}
+            opacity={0.75}
+            saturation={1.05}
+            mixBlendMode="difference"
+            className="border border-white/[0.08]"
+            style={{
+              boxShadow:
+                "0 8px 40px rgba(0,0,0,0.32), 0 16px 48px -16px rgba(36,172,124,0.16), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 -10px 16px -14px rgba(0,0,0,0.35) inset",
+            }}
+          >
+            <div className="relative grid grid-cols-5 items-stretch w-full h-full">
+              {/* Vignette — static radial gradient pulling light toward the top-center, mimics
+                  how thick glass bends light toward its edges without any added blur cost */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_140%_at_50%_-20%,rgba(255,255,255,0.05),transparent_55%)]"
+              />
 
-            {/* Specular top-edge highlight — mimics light catching the glass rim */}
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute top-0 inset-x-6 h-px rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
-            />
+              {/* Specular top-edge highlight — mimics light catching the glass rim */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute top-0 inset-x-6 h-px rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              />
 
-            {/* Sliding active indicator — the grid is 5 equal 1fr tracks (see fab-spacer
-                below), so width is structurally constant across tabs; only x genuinely
-                changes at runtime. Driven purely by `transform` (compositor-only) rather
-                than also transitioning `width`, using a gentler spring than --ease-spring
-                since that curve's ~56% overshoot is tuned for small press deltas and reads
-                as wildly exaggerated stretched across the bar's full travel distance. */}
-            <span
-              aria-hidden="true"
-              className="absolute top-1 h-[calc(100%-8px)] rounded-full bg-[rgba(36,172,124,0.10)] shadow-[0_0_0_1px_rgba(36,172,124,0.14)_inset,0_0_20px_rgba(36,172,124,0.28)] transition-transform duration-[460ms] ease-liquid motion-reduce:transition-none"
-              style={{
-                transform: `translateX(${indicator.x}px)`,
-                width: `${indicator.width}px`,
-              }}
-            />
+              {/* Sliding active indicator — the grid is 5 equal 1fr tracks (see fab-spacer
+                  below), so width is structurally constant across tabs; only x genuinely
+                  changes at runtime. Driven purely by `transform` (compositor-only) rather
+                  than also transitioning `width`, using a gentler spring than --ease-spring
+                  since that curve's ~56% overshoot is tuned for small press deltas and reads
+                  as wildly exaggerated stretched across the bar's full travel distance. */}
+              <span
+                aria-hidden="true"
+                className="absolute top-1 h-[calc(100%-8px)] rounded-full bg-[rgba(36,172,124,0.10)] shadow-[0_0_0_1px_rgba(36,172,124,0.14)_inset,0_0_20px_rgba(36,172,124,0.28)] transition-transform duration-[460ms] ease-liquid motion-reduce:transition-none"
+                style={{
+                  transform: `translateX(${indicator.x}px)`,
+                  width: `${indicator.width}px`,
+                }}
+              />
 
-            {BOTTOM_NAV_TABS.flatMap((tab, i) => {
-              const isActive = activeId === tab.id;
-              const Icon = tab.icon;
+              {BOTTOM_NAV_TABS.flatMap((tab, i) => {
+                const isActive = activeId === tab.id;
+                const Icon = tab.icon;
 
-              const node =
-                tab.id === "more" ? (
-                  <button
-                    key={tab.id}
-                    ref={(el) => {
-                      tabRefs.current.more = el;
-                      moreButtonRef.current = el;
-                    }}
-                    onPointerDown={navRipple.onPointerDown}
-                    onClick={toggleMore}
-                    aria-expanded={moreOpen}
-                    aria-controls="more-sheet"
-                    className={tabClasses(isActive || moreOpen)}
-                  >
-                    <Icon
-                      size={20}
-                      strokeWidth={2}
-                      className={tabIconClasses(isActive || moreOpen)}
-                    />
-                    <span className={tabLabelClasses(isActive || moreOpen)}>
-                      {tab.label}
-                    </span>
-                  </button>
-                ) : (
-                  <Link
-                    key={tab.id}
-                    to={tab.to}
-                    ref={(el) => {
-                      tabRefs.current[tab.id] = el;
-                    }}
-                    onPointerDown={navRipple.onPointerDown}
-                    className={tabClasses(isActive)}
-                  >
-                    <Icon
-                      size={20}
-                      strokeWidth={2}
-                      className={tabIconClasses(isActive)}
-                    />
-                    <span className={tabLabelClasses(isActive)}>
-                      {tab.label}
-                    </span>
-                  </Link>
-                );
+                const node =
+                  tab.id === "more" ? (
+                    <button
+                      key={tab.id}
+                      ref={(el) => {
+                        tabRefs.current.more = el;
+                        moreButtonRef.current = el;
+                      }}
+                      onPointerDown={navRipple.onPointerDown}
+                      onClick={toggleMore}
+                      aria-expanded={moreOpen}
+                      aria-controls="more-sheet"
+                      className={tabClasses(isActive || moreOpen)}
+                    >
+                      <Icon
+                        size={20}
+                        strokeWidth={2}
+                        className={tabIconClasses(isActive || moreOpen)}
+                      />
+                      <span className={tabLabelClasses(isActive || moreOpen)}>
+                        {tab.label}
+                      </span>
+                    </button>
+                  ) : (
+                    <Link
+                      key={tab.id}
+                      to={tab.to}
+                      ref={(el) => {
+                        tabRefs.current[tab.id] = el;
+                      }}
+                      onPointerDown={navRipple.onPointerDown}
+                      className={tabClasses(isActive)}
+                    >
+                      <Icon
+                        size={20}
+                        strokeWidth={2}
+                        className={tabIconClasses(isActive)}
+                      />
+                      <span className={tabLabelClasses(isActive)}>
+                        {tab.label}
+                      </span>
+                    </Link>
+                  );
 
-              // Reserved FAB spacer is inserted as its own grid cell right before "work"
-              // (index 2) rather than replacing it, so all 4 tabs still render — DOM order
-              // becomes Home, Services, [spacer], Work, More for the grid-cols-5 track.
-              return i === 2
-                ? [<div key="fab-spacer" aria-hidden="true" />, node]
-                : [node];
-            })}
-          </div>
-        </GlassSurface>
+                // Reserved FAB spacer is inserted as its own grid cell right before "work"
+                // (index 2) rather than replacing it, so all 4 tabs still render — DOM order
+                // becomes Home, Services, [spacer], Work, More for the grid-cols-5 track.
+                return i === 2
+                  ? [<div key="fab-spacer" aria-hidden="true" />, node]
+                  : [node];
+              })}
+            </div>
+          </GlassSurface>
+          <StarBorderGlow color="#24AC7C" speed="7s" thickness={6} coreSize={36} />
+        </div>
 
         {/* Glow halo behind the FAB pulses via `opacity` only (compositor-safe, GPU-cheap)
             instead of animating `box-shadow` directly — animating box-shadow forces a full

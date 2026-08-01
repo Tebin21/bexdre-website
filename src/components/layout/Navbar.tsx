@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, NavLink as RouterNavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { GlassSurface } from '@/components/ui/GlassSurface';
+import { StarBorderGlow } from '@/components/ui/StarBorder';
 import { NAV_LINKS } from '@/data/nav';
 
 export const Navbar: React.FC = () => {
@@ -50,12 +51,24 @@ export const Navbar: React.FC = () => {
             // both are single-class selectors of equal specificity, so which one wins via
             // the className route depends on CSS bundle order rather than being guaranteed.
             position: 'absolute',
-            inset: 0,
+            // Inset 2px (not flush with the nav's own edge) to leave a thin ring for the
+            // StarBorder comet-glow layer below to trace, same trick as MobileBottomNav.
+            inset: 2,
             boxShadow: scrolled
               ? '0 8px 44px rgba(0,0,0,0.50), 0 0 0 1px rgba(255,255,255,0.07) inset, inset 0 1px 0 0 rgba(255,255,255,0.08)'
               : '0 4px 32px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.04) inset, inset 0 1px 0 0 rgba(255,255,255,0.06)',
           }}
         />
+
+        {/* Shape layer: traces the pill's outer edge (the 2px ring left by the glass
+            layer's inset above) with the StarBorder comet-glow animation. Sits above the
+            glass background but below the z-10 content, matching MobileBottomNav. */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 overflow-hidden rounded-full pointer-events-none"
+        >
+          <StarBorderGlow color="#24AC7C" speed="7s" thickness={8} coreSize={50} />
+        </div>
 
         {/* Content sits above the glass layer in normal flow — its own size (via flex +
             gap) is what the w-fit nav shrinks to, so the absolutely-positioned glass

@@ -4,7 +4,7 @@ import { prefersReducedMotion } from '@/lib/motion';
 import { TypingCodeLayer } from './TypingCodeLayer';
 import { WordAssemblyLayer } from './WordAssemblyLayer';
 import { StaticWebDevFrame } from './StaticWebDevFrame';
-import { useVisibilityPause } from './useVisibilityPause';
+import { useVisibilityPause } from '@/hooks/useVisibilityPause';
 
 /**
  * Orchestrates the Web Development card's cinematic scene. The typing <-> word-assembly
