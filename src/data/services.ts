@@ -1,3 +1,4 @@
+import type React from 'react';
 import {
   Globe,
   Smartphone,
@@ -9,6 +10,12 @@ import {
 } from 'lucide-react';
 import type { Service } from '@/types';
 import { PLACEHOLDER_COPY, placeholderList } from './placeholders';
+import { WebDevBackground } from '@/components/services/card-backgrounds/WebDevBackground';
+import { MobileAppsBackground } from '@/components/services/card-backgrounds/MobileAppsBackground';
+import { BusinessSystemsBackground } from '@/components/services/card-backgrounds/BusinessSystemsBackground';
+import { UiUxBackground } from '@/components/services/card-backgrounds/UiUxBackground';
+import { BrandingBackground } from '@/components/services/card-backgrounds/BrandingBackground';
+import { EcommerceBackground } from '@/components/services/card-backgrounds/EcommerceBackground';
 
 export const SERVICE_ICON_MAP: Record<string, LucideIcon> = {
   'web-development': Globe,
@@ -17,6 +24,15 @@ export const SERVICE_ICON_MAP: Record<string, LucideIcon> = {
   'ui-ux-design': Palette,
   branding: Megaphone,
   'e-commerce': ShoppingCart,
+};
+
+export const SERVICE_BACKGROUND_MAP: Record<string, React.FC> = {
+  'web-development': WebDevBackground,
+  'mobile-apps': MobileAppsBackground,
+  'business-systems': BusinessSystemsBackground,
+  'ui-ux-design': UiUxBackground,
+  branding: BrandingBackground,
+  'e-commerce': EcommerceBackground,
 };
 
 function buildService(slug: string, icon: string, title: string): Service {

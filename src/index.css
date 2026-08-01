@@ -35,6 +35,10 @@
   /* Overshoot "spring" curve for premium hover/tap/sheet interactions — distinct from
      the calmer house ease-out (cubic-bezier(.25,.46,.45,.94)) used for reveals. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Gentle overshoot for large-distance transforms (indicator translateX across the
+     bar) — --ease-spring's ~56% overshoot is tuned for small press deltas and looks
+     wildly exaggerated stretched over 200-300px of travel. */
+  --ease-liquid: cubic-bezier(0.22, 1.18, 0.32, 1);
 }
 
 /* ─── Accessibility ─── */
@@ -68,11 +72,6 @@
   50%       { transform: translateY(-20px) rotate(5deg); }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.35; transform: scale(1); }
-  50%       { opacity: 0.65; transform: scale(1.06); }
-}
-
 /* Every other animation in the app checks prefersReducedMotion() in JS before running;
    this one is pure CSS (always-on, decorative), so it needs the equivalent media-query
    guard to actually stop for users who asked for reduced motion. */
@@ -89,24 +88,19 @@
 
 /* ─── Mobile bottom nav / FAB ─── */
 
-@keyframes fab-pulse-glow {
-  0%, 100% { box-shadow: 0 4px 20px rgba(36,172,124,0.45), 0 0 24px rgba(36,172,124,0.20); }
-  50%       { box-shadow: 0 4px 20px rgba(36,172,124,0.45), 0 0 44px rgba(36,172,124,0.40); }
+/* Pulses `opacity` only (compositor-safe) instead of the box-shadow-animating
+   `fab-pulse-glow` this replaced — animating box-shadow forces a full repaint of the
+   FAB every frame for as long as the page is open, which showed up as a permanent,
+   unconditional paint cost on every mobile page load during profiling. */
+@keyframes fab-glow-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.75; }
 }
 
-.fab-pulse { animation: fab-pulse-glow 2.6s ease-in-out infinite; }
+.fab-glow-pulse { animation: fab-glow-pulse 2.6s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .fab-pulse {
-    animation: none;
-  }
-}
-
-/* Ambient idle glow behind the hero video's play button. */
-.showcase-pulse { animation: pulse-glow 3s ease-in-out infinite; }
-
-@media (prefers-reduced-motion: reduce) {
-  .showcase-pulse {
+  .fab-glow-pulse {
     animation: none;
   }
 }
@@ -115,6 +109,65 @@
    encodes scale/opacity, so both callers can supply their own ripple color. */
 @keyframes fab-ripple {
   to { transform: scale(1); opacity: 0; }
+}
+
+/* ─── Service card background animations ───
+   Shared by every card in src/components/services/card-backgrounds/ — one keyframe
+   per motion type, reused across all 6 concepts (and multiple times within a single
+   card) via per-instance animation-delay/duration and the --x-from/--x-to/--y-from/
+   --y-to custom properties on .bg-travel. Every keyframe only touches transform/opacity
+   so animation stays compositor-only regardless of how many cards are on screen. */
+
+@keyframes bg-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50%       { transform: scale(1.18); opacity: 1; }
+}
+
+@keyframes bg-drift {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes bg-travel {
+  0%   { transform: translate(var(--x-from), var(--y-from)); opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translate(var(--x-to), var(--y-to)); opacity: 0; }
+}
+
+@keyframes bg-rotate-slow {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes bg-crossfade {
+  0%, 45%   { opacity: 1; }
+  50%, 95%  { opacity: 0; }
+  100%      { opacity: 1; }
+}
+
+@keyframes bg-select {
+  0%, 100% { transform: scale(0.92); opacity: 0.4; }
+  50%       { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes bg-barchart {
+  0%, 100% { transform: scaleY(0.4); }
+  50%       { transform: scaleY(1); }
+}
+
+.bg-pulse     { animation: bg-pulse 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.bg-drift     { animation: bg-drift 6s ease-in-out infinite; }
+.bg-travel    { animation: bg-travel 4.5s ease-in-out infinite; }
+.bg-rotate-slow { animation: bg-rotate-slow 48s linear infinite; transform-box: fill-box; transform-origin: center; }
+.bg-crossfade { animation: bg-crossfade 6s ease-in-out infinite; }
+.bg-select    { animation: bg-select 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.bg-barchart  { animation: bg-barchart 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-pulse, .bg-drift, .bg-travel, .bg-rotate-slow, .bg-crossfade, .bg-select, .bg-barchart {
+    animation: none;
+  }
 }
 
 /* ─── Scrollbar ─── */

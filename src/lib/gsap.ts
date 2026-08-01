@@ -1,10 +1,12 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { SplitText } from 'gsap/SplitText';
 
-// Register all GSAP plugins actually used by the app (Flip was registered but never
-// used anywhere — dropped to avoid shipping dead plugin code).
-gsap.registerPlugin(ScrollTrigger, SplitText);
+// Register all GSAP plugins actually used app-wide (Flip was registered but never used
+// anywhere — dropped to avoid shipping dead plugin code). SplitText is *not* registered
+// here: HeroSection is its only consumer, and eagerly bundling it into this shared
+// module meant every single page paid to download/parse it as part of the
+// `useGSAPReveal` chunk. HeroSection dynamically imports it on demand instead.
+gsap.registerPlugin(ScrollTrigger);
 
 // Default GSAP config
 gsap.config({
@@ -32,4 +34,4 @@ export const staggerDefaults = {
   ease: 'power3.out',
 };
 
-export { gsap, ScrollTrigger, SplitText };
+export { gsap, ScrollTrigger };

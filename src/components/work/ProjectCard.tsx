@@ -12,7 +12,7 @@ interface ProjectCardProps {
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => (
   <Link
     to={`/work/${project.slug}`}
-    className="project-card group block h-full rounded-[28px] overflow-hidden border border-white/[0.08] bg-[rgba(15,20,24,0.72)] backdrop-blur-xl transition-all duration-[420ms] ease-[cubic-bezier(.25,.46,.45,.94)] hover:-translate-y-2 hover:border-[rgba(36,172,124,0.25)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.55)]"
+    className="project-card group block h-full rounded-[28px] overflow-hidden border border-white/[0.08] bg-[rgba(15,20,24,0.72)] backdrop-blur-md lg:backdrop-blur-xl transition-all duration-[420ms] ease-[cubic-bezier(.25,.46,.45,.94)] hover:-translate-y-2 hover:border-[rgba(36,172,124,0.25)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.55)]"
   >
     <div
       className="h-[200px] w-full"

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { HeroVideo } from './HeroVideo';
-import { gsap, SplitText } from '@/lib/gsap';
+import { gsap } from '@/lib/gsap';
 import { useParallax } from '@/hooks/useParallax';
 import { prefersReducedMotion } from '@/lib/motion';
 import { decideIntro, isIntroComplete, INTRO_COMPLETE_EVENT } from '@/lib/introSession';
@@ -27,9 +27,18 @@ export const HeroSection: React.FC = () => {
 
     gsap.set([heading, subtext, cta], { opacity: 0 });
 
+    let cancelled = false;
     let cleanup: (() => void) | undefined;
 
-    function playEntrance() {
+    // SplitText is only needed for this one entrance animation, so it's loaded on
+    // demand here instead of being bundled into the shared GSAP chunk every page pays
+    // for (see lib/gsap.ts). `cancelled` guards against the effect unmounting while
+    // the dynamic import is still in flight.
+    async function playEntrance() {
+      const { SplitText } = await import('gsap/SplitText');
+      if (cancelled) return;
+      gsap.registerPlugin(SplitText);
+
       const split = new SplitText(heading, { type: 'words' });
       gsap.set(heading, { opacity: 1 });
       gsap.set([subtext, cta], { opacity: 0, y: 20 });
@@ -47,13 +56,17 @@ export const HeroSection: React.FC = () => {
 
     if (isIntroComplete() || !decideIntro()) {
       playEntrance();
-      return () => cleanup?.();
+      return () => {
+        cancelled = true;
+        cleanup?.();
+      };
     }
 
     const handleIntroComplete = () => playEntrance();
     window.addEventListener(INTRO_COMPLETE_EVENT, handleIntroComplete, { once: true });
 
     return () => {
+      cancelled = true;
       window.removeEventListener(INTRO_COMPLETE_EVENT, handleIntroComplete);
       cleanup?.();
     };
@@ -65,15 +78,18 @@ export const HeroSection: React.FC = () => {
       className="relative overflow-hidden pt-10 lg:pt-[195px] xl:pt-[220px] pb-20 md:pb-28 lg:pb-32"
     >
       {/* Decorative parallax glow orbs */}
+      {/* Blur radius reduced below `lg`: these sit permanently under every backdrop-filter
+          card further down the page, so mobile GPUs pay for this sampling repeatedly.
+          Desktop keeps the original radius. */}
       <div
         data-parallax="0.6"
         aria-hidden="true"
-        className="absolute top-[12%] left-[6%] w-72 h-72 rounded-full bg-[#24AC7C]/20 blur-[100px] pointer-events-none"
+        className="absolute top-[12%] left-[6%] w-72 h-72 rounded-full bg-[#24AC7C]/20 blur-[48px] lg:blur-[100px] pointer-events-none"
       />
       <div
         data-parallax="1.1"
         aria-hidden="true"
-        className="absolute bottom-[8%] right-[8%] w-96 h-96 rounded-full bg-[#24AC7C]/10 blur-[120px] pointer-events-none"
+        className="absolute bottom-[8%] right-[8%] w-96 h-96 rounded-full bg-[#24AC7C]/10 blur-[56px] lg:blur-[120px] pointer-events-none"
       />
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-10 max-sm:px-5 w-full">

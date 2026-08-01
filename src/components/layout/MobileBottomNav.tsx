@@ -41,7 +41,7 @@ const tabClasses = (active: boolean) =>
     // Hover-only glass halo via a pseudo-element — no extra DOM node — gated to
     // hover-capable pointers so it can't get stuck "on" after a tap on touch devices.
     "before:content-[''] before:absolute before:inset-x-2 before:inset-y-1.5 before:rounded-2xl before:opacity-0",
-    'before:bg-white/[0.05] before:shadow-[0_2px_10px_rgba(0,0,0,0.25),0_0_18px_rgba(36,172,124,0.16)]',
+    'before:bg-white/[0.05] before:shadow-[0_2px_14px_rgba(0,0,0,0.20),0_0_18px_rgba(36,172,124,0.16)]',
     'before:transition-opacity before:duration-200 motion-reduce:before:transition-none',
     '[@media(hover:hover)_and_(pointer:fine)]:hover:before:opacity-100',
     active
@@ -53,8 +53,15 @@ const tabIconClasses = (active: boolean) =>
   [
     'transition-transform duration-300 ease-spring motion-reduce:transition-none',
     active
-      ? 'scale-[1.08]'
-      : 'scale-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-105',
+      ? 'scale-[1.08] -translate-y-0.5'
+      : 'scale-100 translate-y-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-105',
+  ].join(' ');
+
+const tabLabelClasses = (active: boolean) =>
+  [
+    'text-[11px] font-medium tracking-tight',
+    'transition-[opacity,transform,color] duration-300 ease-spring motion-reduce:transition-none',
+    active ? 'opacity-100 scale-100' : 'opacity-70 scale-95',
   ].join(' ');
 
 export const MobileBottomNav: React.FC = () => {
@@ -103,13 +110,35 @@ export const MobileBottomNav: React.FC = () => {
     <>
       <nav
         aria-label="Primary mobile"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)]"
+        className="group/fab lg:hidden fixed bottom-0 inset-x-0 z-50 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)]"
       >
-        <div className="relative grid grid-cols-5 items-stretch h-16 rounded-[28px] backdrop-blur-xl bg-[rgba(15,20,24,0.72)] border border-white/[0.08] shadow-[0_4px_32px_rgba(0,0,0,0.40),0_0_0_1px_rgba(255,255,255,0.04)_inset]">
-          {/* Sliding active indicator */}
+        {/* This bar is fixed and mounted on every mobile page, so its backdrop-filter is
+            continuously re-sampled by the GPU while scrolling — a lighter blur radius
+            here (vs. desktop's GlassCard blur-xl) meaningfully cuts that cost; saturate
+            is left at full strength since it's cheap relative to blur. */}
+        <div className="relative grid grid-cols-5 items-stretch h-16 rounded-[28px] backdrop-blur-md backdrop-saturate-150 bg-[rgba(15,20,24,0.72)] border border-white/[0.08] shadow-[0_8px_40px_rgba(0,0,0,0.32),0_16px_48px_-16px_rgba(36,172,124,0.16),0_0_0_1px_rgba(255,255,255,0.04)_inset,0_-10px_16px_-14px_rgba(0,0,0,0.35)_inset]">
+          {/* Vignette — static radial gradient pulling light toward the top-center, mimics
+              how thick glass bends light toward its edges without any added blur cost */}
           <span
             aria-hidden="true"
-            className="absolute top-1 h-[calc(100%-8px)] rounded-2xl bg-[rgba(36,172,124,0.10)] shadow-[0_0_0_1px_rgba(36,172,124,0.14)_inset,0_0_20px_rgba(36,172,124,0.28)] transition-[transform,width] duration-[420ms] ease-[cubic-bezier(.25,.46,.45,.94)] motion-reduce:transition-none"
+            className="pointer-events-none absolute inset-0 rounded-[28px] bg-[radial-gradient(120%_140%_at_50%_-20%,rgba(255,255,255,0.05),transparent_55%)]"
+          />
+
+          {/* Specular top-edge highlight — mimics light catching the glass rim */}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 inset-x-6 h-px rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
+          />
+
+          {/* Sliding active indicator — the grid is 5 equal 1fr tracks (see fab-spacer
+              below), so width is structurally constant across tabs; only x genuinely
+              changes at runtime. Driven purely by `transform` (compositor-only) rather
+              than also transitioning `width`, using a gentler spring than --ease-spring
+              since that curve's ~56% overshoot is tuned for small press deltas and reads
+              as wildly exaggerated stretched across the bar's full travel distance. */}
+          <span
+            aria-hidden="true"
+            className="absolute top-1 h-[calc(100%-8px)] rounded-2xl bg-[rgba(36,172,124,0.10)] shadow-[0_0_0_1px_rgba(36,172,124,0.14)_inset,0_0_20px_rgba(36,172,124,0.28)] transition-transform duration-[460ms] ease-liquid motion-reduce:transition-none"
             style={{ transform: `translateX(${indicator.x}px)`, width: `${indicator.width}px` }}
           />
 
@@ -132,9 +161,7 @@ export const MobileBottomNav: React.FC = () => {
                   className={tabClasses(isActive || moreOpen)}
                 >
                   <Icon size={20} strokeWidth={2} className={tabIconClasses(isActive || moreOpen)} />
-                  <span className="text-[11px] font-medium tracking-tight transition-colors duration-200">
-                    {tab.label}
-                  </span>
+                  <span className={tabLabelClasses(isActive || moreOpen)}>{tab.label}</span>
                 </button>
               ) : (
                 <Link
@@ -147,9 +174,7 @@ export const MobileBottomNav: React.FC = () => {
                   className={tabClasses(isActive)}
                 >
                   <Icon size={20} strokeWidth={2} className={tabIconClasses(isActive)} />
-                  <span className="text-[11px] font-medium tracking-tight transition-colors duration-200">
-                    {tab.label}
-                  </span>
+                  <span className={tabLabelClasses(isActive)}>{tab.label}</span>
                 </Link>
               );
 
@@ -159,6 +184,20 @@ export const MobileBottomNav: React.FC = () => {
             return i === 2 ? [<div key="fab-spacer" aria-hidden="true" />, node] : [node];
           })}
         </div>
+
+        {/* Glow halo behind the FAB pulses via `opacity` only (compositor-safe, GPU-cheap)
+            instead of animating `box-shadow` directly — animating box-shadow forces a full
+            repaint of the element every frame for as long as the page is open, since it
+            isn't a compositor-only property like transform/opacity. Sized past the button
+            and kept as a sibling (not a child) so the button's own `overflow-hidden`
+            doesn't clip the bleed. `group-active/fab` reacts to the FAB button being
+            pressed — :active bubbles up through ancestors, and this span shares <nav> as
+            an ancestor with the button, so no DOM reorder/z-index juggling is needed to
+            let the press compress the glow (opacity/scale only, still compositor-safe). */}
+        <span
+          aria-hidden="true"
+          className="fab-glow-pulse motion-reduce:animate-none absolute left-1/2 -translate-x-1/2 -top-9 w-20 h-20 rounded-full bg-[#24AC7C] blur-lg pointer-events-none transition-[opacity,transform] duration-150 ease-spring group-active/fab:opacity-95 group-active/fab:scale-90 motion-reduce:transition-none"
+        />
 
         {/* Floating center action button */}
         <button
@@ -170,16 +209,26 @@ export const MobileBottomNav: React.FC = () => {
           aria-controls="quick-actions-sheet"
           aria-label="Quick actions"
           className={[
-            'fab-pulse motion-reduce:animate-none',
             'absolute left-1/2 -translate-x-1/2 -top-7 w-16 h-16 rounded-full overflow-hidden',
             'flex items-center justify-center text-white',
-            'bg-gradient-to-br from-[#24AC7C] to-[#1a8a62]',
-            'shadow-[0_4px_20px_rgba(36,172,124,0.45)]',
+            // Fill is ~92% opaque, so a backdrop-filter here has negligible visible effect
+            // (only 8% of the pixel is the sampled backdrop) but still costs a full extra
+            // GPU blur pass stacked on top of the bar's own backdrop-blur below it —
+            // dropped for that reason, no visible change.
+            'bg-gradient-to-br from-[rgba(43,200,143,0.92)] to-[rgba(26,138,98,0.92)]',
+            // First segment is a tight contact shadow (sells the FAB floating just above
+            // the bar); second is the existing ambient glow, softened slightly to match
+            // the bar's falloff.
+            'shadow-[0_6px_10px_-4px_rgba(0,0,0,0.45),0_4px_20px_rgba(36,172,124,0.42),0_1px_0_rgba(255,255,255,0.35)_inset,0_-1px_0_rgba(0,0,0,0.15)_inset]',
             'transition-transform duration-300 ease-spring motion-reduce:transition-none',
             '[@media(hover:hover)_and_(pointer:fine)]:hover:scale-[1.08] active:scale-[0.94]',
+            // Static glass-sphere catch-light — two layered radial gradients (tight glint
+            // + soft ambient fill) for a more convincing glass-sphere read, no animation cost
+            "before:content-[''] before:absolute before:inset-0 before:rounded-full before:pointer-events-none",
+            'before:bg-[radial-gradient(circle_at_28%_22%,rgba(255,255,255,0.42),transparent_45%),radial-gradient(circle_at_72%_78%,rgba(255,255,255,0.10),transparent_65%)]',
           ].join(' ')}
         >
-          <MessageCircle size={26} strokeWidth={2} />
+          <MessageCircle size={26} strokeWidth={2} className="relative z-10" />
         </button>
       </nav>
 
