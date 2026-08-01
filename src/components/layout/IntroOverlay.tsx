@@ -5,9 +5,9 @@ import { decideIntro } from '@/lib/introSession';
 /**
  * Full-screen brand-introduction sequence shown once per browser session,
  * before the homepage becomes visible. A single glowing dot in the brand
- * color holds center stage while a crossfading multilingual greeting
- * appears beneath it, then everything fades away to reveal the page
- * underneath. Deliberately minimal — no logo, no motion beyond opacity.
+ * color sits inline beside a crossfading multilingual greeting, then
+ * everything fades away to reveal the page underneath. Deliberately
+ * minimal — no logo, no motion beyond opacity.
  */
 export const IntroOverlay: React.FC = () => {
   const [shouldPlay] = useState(() => decideIntro());
@@ -20,11 +20,11 @@ export const IntroOverlay: React.FC = () => {
     <div
       ref={overlayRef}
       aria-hidden="true"
-      className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center gap-10 md:gap-12"
+      className="fixed inset-0 z-[200] bg-black flex items-center justify-center gap-8 md:gap-10 px-6"
     >
       <span
         ref={dotRef}
-        className="block h-4 w-4 rounded-full bg-[#24AC7C] shadow-[0_0_16px_rgba(36,172,124,0.6),0_0_4px_rgba(36,172,124,0.45)]"
+        className="block h-4 w-4 shrink-0 rounded-full bg-[#24AC7C] shadow-[0_0_16px_rgba(36,172,124,0.6),0_0_4px_rgba(36,172,124,0.45)]"
       />
       <div className="relative h-[56px] md:h-[72px] flex items-center justify-center px-6">
         <span

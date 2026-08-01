@@ -73,18 +73,6 @@ export interface Differentiator {
   isPlaceholder: true;
 }
 
-// ─── Testimonials ───
-
-export interface Testimonial {
-  id: string;
-  quote: string;
-  author: string;
-  role: string;
-  company: string;
-  initials: string;
-  isPlaceholder: true;
-}
-
 // ─── Insights ───
 
 export type InsightCategory = 'Articles' | 'Tutorials' | 'Company News' | 'Technology';

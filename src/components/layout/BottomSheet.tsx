@@ -13,7 +13,7 @@ interface BottomSheetProps {
   children: React.ReactNode;
   className?: string;
   /**
-   * 'center' (default): full-width panel centered under its trigger (Quick actions/FAB).
+   * 'center' (default): full-width panel centered under its trigger.
    * 'end': right-anchored panel that lines up under a trigger sitting at the bar's right
    * edge (More), so it reads as anchored to the button instead of a generic full sheet.
    */
@@ -21,9 +21,9 @@ interface BottomSheetProps {
 }
 
 /**
- * Shared glass bottom-sheet primitive for the mobile bottom nav's "More" menu and the
- * FAB's quick-actions menu: backdrop, spring-in panel, scroll lock, Escape-to-close,
- * and a focus trap that restores focus to the trigger on close.
+ * Shared glass bottom-sheet primitive for the mobile bottom nav's "More" menu: backdrop,
+ * spring-in panel, scroll lock, Escape-to-close, and a focus trap that restores focus to
+ * the trigger on close.
  */
 export const BottomSheet: React.FC<BottomSheetProps> = ({
   id,

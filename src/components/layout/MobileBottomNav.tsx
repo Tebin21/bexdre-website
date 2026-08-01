@@ -1,44 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  MessageCircle,
-  Rocket,
-  Phone,
-  Mail,
-  MessageSquare,
-  CalendarClock,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { BottomSheet } from "./BottomSheet";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { BOTTOM_NAV_TABS, MORE_LINKS, getActiveTabId } from "@/data/bottomNav";
 import type { BottomNavTabId } from "@/data/bottomNav";
 import { LEGAL_LINKS } from "@/data/nav";
-import { CONTACT_INFO } from "@/data/contact";
 import { useRipple } from "@/hooks/useRipple";
-
-interface QuickAction {
-  icon: LucideIcon;
-  label: string;
-  to?: string;
-  href?: string;
-}
-
-const QUICK_ACTIONS: QuickAction[] = [
-  { icon: Rocket, label: "Start a Project", to: "/contact" },
-  {
-    icon: Phone,
-    label: "Book a Call",
-    href: `tel:${CONTACT_INFO.phone.replace(/[^\d+]/g, "")}`,
-  },
-  { icon: Mail, label: "Email Us", href: `mailto:${CONTACT_INFO.email}` },
-  { icon: MessageSquare, label: "WhatsApp", href: CONTACT_INFO.whatsapp },
-  {
-    icon: CalendarClock,
-    label: "Schedule a Meeting",
-    href: CONTACT_INFO.scheduleMeetingUrl,
-  },
-];
 
 const rowClasses =
   "flex items-center gap-4 px-5 py-4 text-[15px] font-medium text-white/80 hover:text-white hover:bg-white/[0.06] transition-colors duration-200 first:rounded-t-[28px] last:rounded-b-[28px]";
@@ -85,15 +53,13 @@ export const MobileBottomNav: React.FC = () => {
   const activeId = getActiveTabId(pathname);
 
   const [moreOpen, setMoreOpen] = useState(false);
-  const [actionsOpen, setActionsOpen] = useState(false);
 
   const tabRefs = useRef<Partial<Record<BottomNavTabId, HTMLElement | null>>>(
     {},
   );
   const moreButtonRef = useRef<HTMLButtonElement>(null);
-  const fabRef = useRef<HTMLButtonElement>(null);
   const [indicator, setIndicator] = useState({ x: 0, width: 0 });
-  const ripple = useRipple<HTMLButtonElement>();
+  const ripple = useRipple<HTMLAnchorElement>();
   const navRipple = useRipple<HTMLElement>("rgba(36,172,124,0.35)");
 
   // Horizontal breathing room between the indicator and the tab cell's edges — mirrors
@@ -122,17 +88,10 @@ export const MobileBottomNav: React.FC = () => {
 
   useEffect(() => {
     setMoreOpen(false);
-    setActionsOpen(false);
   }, [pathname]);
 
   const toggleMore = () => {
-    setActionsOpen(false);
     setMoreOpen((v) => !v);
-  };
-
-  const toggleActions = () => {
-    setMoreOpen(false);
-    setActionsOpen((v) => !v);
   };
 
   return (
@@ -268,15 +227,11 @@ export const MobileBottomNav: React.FC = () => {
           className="fab-glow-pulse motion-reduce:animate-none absolute left-1/2 -translate-x-1/2 -top-9 w-20 h-20 rounded-full bg-[#24AC7C] blur-lg pointer-events-none transition-[opacity,transform] duration-150 ease-spring group-active/fab:opacity-95 group-active/fab:scale-90 motion-reduce:transition-none"
         />
 
-        {/* Floating center action button */}
-        <button
-          ref={fabRef}
+        {/* Floating center action button — navigates straight to Contact, no popup */}
+        <Link
+          to="/contact"
           onPointerDown={ripple.onPointerDown}
-          onClick={toggleActions}
-          aria-haspopup="dialog"
-          aria-expanded={actionsOpen}
-          aria-controls="quick-actions-sheet"
-          aria-label="Quick actions"
+          aria-label="Go to contact"
           className={[
             "absolute left-1/2 -translate-x-1/2 -top-7 w-16 h-16 rounded-full overflow-hidden",
             "flex items-center justify-center text-white",
@@ -298,7 +253,7 @@ export const MobileBottomNav: React.FC = () => {
           ].join(" ")}
         >
           <MessageCircle size={26} strokeWidth={2} className="relative z-10" />
-        </button>
+        </Link>
       </nav>
 
       {/* "More" sheet */}
@@ -336,41 +291,6 @@ export const MobileBottomNav: React.FC = () => {
               {link.label}
             </Link>
           ))}
-        </div>
-      </BottomSheet>
-
-      {/* FAB quick-actions sheet */}
-      <BottomSheet
-        id="quick-actions-sheet"
-        open={actionsOpen}
-        onClose={() => setActionsOpen(false)}
-        triggerRef={fabRef}
-        labelledBy="quick-actions-heading"
-      >
-        <h2 id="quick-actions-heading" className="sr-only">
-          Quick actions
-        </h2>
-        <div className="py-2">
-          {QUICK_ACTIONS.map((action) => {
-            const Icon = action.icon;
-            const content = (
-              <>
-                <span className="w-9 h-9 rounded-full flex items-center justify-center bg-[rgba(36,172,124,0.12)] text-[#24AC7C]">
-                  <Icon size={17} strokeWidth={2} />
-                </span>
-                {action.label}
-              </>
-            );
-            return action.to ? (
-              <Link key={action.label} to={action.to} className={rowClasses}>
-                {content}
-              </Link>
-            ) : (
-              <a key={action.label} href={action.href} className={rowClasses}>
-                {content}
-              </a>
-            );
-          })}
         </div>
       </BottomSheet>
     </>
