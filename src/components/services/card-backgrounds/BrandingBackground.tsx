@@ -1,10 +1,15 @@
 import type React from 'react';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { prefersReducedMotion } from '@/lib/motion';
 import { CardBackground } from './CardBackground';
 import { Node } from './primitives';
-import SoftAurora from './branding/SoftAurora';
 import { useVisibilityPause } from '@/hooks/useVisibilityPause';
+import { useInViewport } from '@/hooks/useInViewport';
+
+// Deferred: pulls in `ogl` + this shader, which otherwise inflate the eagerly-loaded
+// Home/Services chunks even though this card sits below the fold on every page it
+// appears on. Mounted only once the card is near the viewport (see useInViewport below).
+const SoftAurora = lazy(() => import('./branding/SoftAurora'));
 
 /**
  * prefers-reduced-motion fallback: the static logo-construction guides that used to be
@@ -40,7 +45,8 @@ const StaticBrandingFrame: React.FC = () => (
 
 export const BrandingBackground: React.FC = () => {
   const [reducedMotion] = useState(prefersReducedMotion);
-  const paused = useVisibilityPause();
+  const tabPaused = useVisibilityPause();
+  const { ref, isInView } = useInViewport<HTMLDivElement>();
 
   if (reducedMotion) {
     return (
@@ -54,22 +60,30 @@ export const BrandingBackground: React.FC = () => {
     // SoftAurora carries its own two-color gradient as the point of the motif, so it
     // opts out of CardBackground's flat opacity-[0.06] contract (tuned for single-color
     // line art) in favor of a higher opacity that keeps the glow vivid and full-bleed.
-    <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-[0.42]">
-      <SoftAurora
-        speed={0.5}
-        scale={1.8}
-        brightness={1.5}
-        color1="#24AC7C"
-        color2="#F5B94A"
-        noiseFrequency={2.2}
-        noiseAmplitude={1.0}
-        bandHeight={0.5}
-        bandSpread={1.4}
-        octaveDecay={0.15}
-        layerOffset={1.2}
-        colorSpeed={0.8}
-        paused={paused}
-      />
+    <div
+      ref={ref}
+      aria-hidden="true"
+      className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-[0.42]"
+    >
+      {isInView && (
+        <Suspense fallback={null}>
+          <SoftAurora
+            speed={0.5}
+            scale={1.8}
+            brightness={1.5}
+            color1="#24AC7C"
+            color2="#F5B94A"
+            noiseFrequency={2.2}
+            noiseAmplitude={1.0}
+            bandHeight={0.5}
+            bandSpread={1.4}
+            octaveDecay={0.15}
+            layerOffset={1.2}
+            colorSpeed={0.8}
+            paused={tabPaused}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

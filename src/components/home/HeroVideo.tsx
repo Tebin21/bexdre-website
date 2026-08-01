@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useGSAPReveal } from '@/hooks/useGSAPReveal';
 
@@ -11,30 +11,38 @@ const VIDEO_SRC = '/videos/bexdrevideo.mp4';
  * <video> itself is mounted lazily via IntersectionObserver rather than
  * eagerly on first paint.
  *
- * Plays continuously (autoplay + loop, never pauses) as a background
- * showcase reel; the only interactive control is mute/unmute.
+ * Plays while in view (autoplay + loop while visible), pausing decode/paint
+ * work once scrolled out of view and resuming automatically on scroll-back;
+ * the only interactive control is mute/unmute.
  */
 export const HeroVideo: React.FC = () => {
   const ref = useGSAPReveal<HTMLDivElement>({ y: 48, duration: 1 });
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || shouldLoad) return;
+    if (!el) return;
 
+    // Kept observing for the component's whole lifetime (not disconnected after the
+    // first hit) so playback can also pause/resume as the user scrolls past — not just
+    // gate the initial mount.
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setShouldLoad(true);
-          observer.disconnect();
+        const inView = entries[0]?.isIntersecting ?? false;
+        if (inView) setShouldLoad(true);
+        const video = videoRef.current;
+        if (video) {
+          if (inView) video.play().catch(() => {});
+          else video.pause();
         }
       },
       { rootMargin: '200px 0px' },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [ref, shouldLoad]);
+  }, [ref]);
 
   const toggleMute = () => setIsMuted((prev) => !prev);
 
@@ -62,6 +70,7 @@ export const HeroVideo: React.FC = () => {
 
         {shouldLoad && (
           <video
+            ref={videoRef}
             className="absolute inset-0 h-full w-full object-cover"
             src={VIDEO_SRC}
             autoPlay

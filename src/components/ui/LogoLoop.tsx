@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
+import { useInViewport } from '@/hooks/useInViewport';
 import './LogoLoop.css';
 
 const ANIMATION_CONFIG = { SMOOTH_TAU: 0.25, MIN_COPIES: 2, COPY_HEADROOM: 2 };
@@ -114,7 +115,8 @@ const useAnimationLoop = (
   seqHeight: number,
   isHovered: boolean,
   hoverSpeed: number | undefined,
-  isVertical: boolean
+  isVertical: boolean,
+  isInView: boolean
 ) => {
   const rafRef = useRef<number | null>(null);
   const lastTimestampRef = useRef<number | null>(null);
@@ -123,7 +125,11 @@ const useAnimationLoop = (
 
   useEffect(() => {
     const track = trackRef.current;
-    if (!track) return;
+    // Scrolled off-screen: stop scheduling rAF entirely rather than just skipping the
+    // transform write, since this loop otherwise runs forever regardless of visibility.
+    // offsetRef/velocityRef persist across the pause, so motion resumes seamlessly from
+    // wherever it left off once back in view.
+    if (!track || !isInView) return;
 
     const seqSize = isVertical ? seqHeight : seqWidth;
 
@@ -171,7 +177,7 @@ const useAnimationLoop = (
       }
       lastTimestampRef.current = null;
     };
-  }, [targetVelocity, seqWidth, seqHeight, isHovered, hoverSpeed, isVertical, trackRef]);
+  }, [targetVelocity, seqWidth, seqHeight, isHovered, hoverSpeed, isVertical, trackRef, isInView]);
 };
 
 export const LogoLoop: React.FC<LogoLoopProps> = memo(
@@ -195,6 +201,7 @@ export const LogoLoop: React.FC<LogoLoopProps> = memo(
     const containerRef = useRef<HTMLDivElement>(null);
     const trackRef = useRef<HTMLDivElement>(null);
     const seqRef = useRef<HTMLUListElement>(null);
+    const { ref: viewportRef, isInView } = useInViewport<HTMLDivElement>();
 
     const [seqWidth, setSeqWidth] = useState(0);
     const [seqHeight, setSeqHeight] = useState(0);
@@ -251,7 +258,27 @@ export const LogoLoop: React.FC<LogoLoopProps> = memo(
 
     useImageLoader(seqRef, updateDimensions, [logos, gap, logoHeight, isVertical]);
 
-    useAnimationLoop(trackRef, targetVelocity, seqWidth, seqHeight, isHovered, effectiveHoverSpeed, isVertical);
+    useAnimationLoop(
+      trackRef,
+      targetVelocity,
+      seqWidth,
+      seqHeight,
+      isHovered,
+      effectiveHoverSpeed,
+      isVertical,
+      isInView
+    );
+
+    // containerRef is read synchronously for width/height measurements elsewhere in this
+    // component, so the viewport observer attaches via a merged callback ref onto the
+    // same node rather than replacing it.
+    const setRootRef = useCallback(
+      (el: HTMLDivElement | null) => {
+        containerRef.current = el;
+        (viewportRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      },
+      [viewportRef]
+    );
 
     const cssVariables = useMemo(
       () =>
@@ -366,7 +393,7 @@ export const LogoLoop: React.FC<LogoLoopProps> = memo(
     );
 
     return (
-      <div ref={containerRef} className={rootClassName} style={containerStyle} role="region" aria-label={ariaLabel}>
+      <div ref={setRootRef} className={rootClassName} style={containerStyle} role="region" aria-label={ariaLabel}>
         <div className="logoloop__track" ref={trackRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
           {logoLists}
         </div>

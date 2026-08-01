@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import type { InsightArticle } from '@/types';
@@ -10,7 +10,7 @@ interface ArticleCardProps {
 }
 
 /** Shared by Home "Latest Insights", the Insights hub, and related-articles lists. */
-export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => (
+export const ArticleCard: React.FC<ArticleCardProps> = memo(({ article }) => (
   <Link to={`/insights/${article.slug}`} className="article-card block group h-full">
     <GlassCard className="h-full flex flex-col gap-4">
       <Badge>{article.category}</Badge>
@@ -24,4 +24,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => (
       </div>
     </GlassCard>
   </Link>
-);
+));
+
+ArticleCard.displayName = 'ArticleCard';

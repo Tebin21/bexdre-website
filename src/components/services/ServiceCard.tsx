@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import type { Service } from '@/types';
@@ -9,7 +9,7 @@ interface ServiceCardProps {
   service: Service;
 }
 
-export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
+export const ServiceCard: React.FC<ServiceCardProps> = memo(({ service }) => {
   const Background = SERVICE_BACKGROUND_MAP[service.icon];
 
   return (
@@ -28,4 +28,6 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service }) => {
       </GlassCard>
     </Link>
   );
-};
+});
+
+ServiceCard.displayName = 'ServiceCard';
