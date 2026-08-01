@@ -20,7 +20,7 @@ export const IntroOverlay: React.FC = () => {
     <div
       ref={overlayRef}
       aria-hidden="true"
-      className="fixed inset-0 z-[200] bg-black flex items-center justify-center gap-8 md:gap-10 px-6"
+      className="fixed inset-0 z-[200] bg-black flex items-center justify-center gap-20 md:gap-22 px-18"
     >
       <span
         ref={dotRef}
