@@ -156,6 +156,68 @@
   50%       { transform: scaleY(1); }
 }
 
+/* ─── Web Development card: cinematic coding-scene loop ───
+   One 11s cycle, shared by every animated element in card-backgrounds/webdev/, so
+   everything stays phase-locked forever: 0-45% typing, 45-59% code -> word,
+   59-82% word hold, 82-100% word -> code. Only transform/opacity are animated. */
+
+@keyframes bg-webdev-panel-fade {
+  0%, 45%  { opacity: 1; }
+  59%, 82% { opacity: 0; }
+  100%     { opacity: 1; }
+}
+
+@keyframes bg-webdev-word-fade {
+  0%, 45%  { opacity: 0; }
+  59%, 82% { opacity: 1; }
+  100%     { opacity: 0; }
+}
+
+@keyframes bg-webdev-token-in {
+  0%   { opacity: 0; transform: translateY(2px); }
+  4%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bg-webdev-cursor-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Every fragment's static resting position is set via left/top (never animated);
+   only the centering + scatter offset move, via transform. Same scatter vector at
+   0% and 100% so the infinite loop has no discontinuity at the repeat boundary. */
+@keyframes bg-webdev-fragment-assemble {
+  0%, 45% {
+    transform: translate(-50%, -50%) translate(var(--x-from), var(--y-from));
+    opacity: 0;
+  }
+  59%, 82% {
+    transform: translate(-50%, -50%) translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(var(--x-from), var(--y-from));
+    opacity: 0;
+  }
+}
+
+@keyframes bg-webdev-word-glow {
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 1; }
+}
+
+.bg-webdev-panel-fade        { animation: bg-webdev-panel-fade 11s ease-in-out infinite; }
+.bg-webdev-word-fade         { animation: bg-webdev-word-fade 11s ease-in-out infinite; }
+.bg-webdev-token-in          { animation: bg-webdev-token-in 11s ease-out infinite; display: inline-block; }
+.bg-webdev-cursor-blink      { animation: bg-webdev-cursor-blink 1s steps(1) infinite; }
+.bg-webdev-fragment-assemble { animation: bg-webdev-fragment-assemble 11s ease-in-out infinite; }
+.bg-webdev-word-glow         { animation: bg-webdev-word-glow 3.4s ease-in-out infinite; }
+
+/* Belt-and-suspenders alongside CodeSceneBackground's JS-level prefersReducedMotion()
+   mount gate — pauses the whole scene's compositor work while the tab is hidden. */
+.webdev-bg-scene[data-bg-paused="true"] * { animation-play-state: paused; }
+
 .bg-pulse     { animation: bg-pulse 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .bg-drift     { animation: bg-drift 6s ease-in-out infinite; }
 .bg-travel    { animation: bg-travel 4.5s ease-in-out infinite; }
@@ -165,7 +227,9 @@
 .bg-barchart  { animation: bg-barchart 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bg-pulse, .bg-drift, .bg-travel, .bg-rotate-slow, .bg-crossfade, .bg-select, .bg-barchart {
+  .bg-pulse, .bg-drift, .bg-travel, .bg-rotate-slow, .bg-crossfade, .bg-select, .bg-barchart,
+  .bg-webdev-panel-fade, .bg-webdev-word-fade, .bg-webdev-token-in, .bg-webdev-cursor-blink,
+  .bg-webdev-fragment-assemble, .bg-webdev-word-glow {
     animation: none;
   }
 }
